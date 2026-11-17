@@ -714,4 +714,35 @@ For more examples and ideas, visit:
 
 ### 8-2. ubuntu 컨테이너를 실행/내부 진입 후 간단 명령 수행
 
+```
+
+# ubuntu 컨테이너를 새롭게 생성하여 실행하고(docker run) -it (interactive TTY) 컨테이너 내부로 진입합니다. (bash)
+
+
+sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker run -it ubuntu:latest bash
+[sudo: authenticate] Password:
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+517b871c26ea: Pull complete
+96aae9022e0e: Pull complete
+Digest: sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
+Status: Downloaded newer image for ubuntu:latest
+
+# 터미널에 진입 후 간단한 명령어를 실행합니다.
+ls 명령어를 통해 내부 파일의 목록을 확인합니다.
+
+root@509c6b51bafb:/# ls
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+
+# echo 명령어를 통해 "" 속 지정한 문구를 출력합니다.
+
+root@509c6b51bafb:/# echo "Hello Ubuntu Container"
+Hello Ubuntu Container
+
+# exit 명령어를 통해 컨테이너 내부를 빠져나옵니다.
+
+root@509c6b51bafb:/# exit
+exit
+```
+
 
