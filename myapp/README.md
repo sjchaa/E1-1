@@ -742,7 +742,61 @@ Hello Ubuntu Container
 # exit 명령어를 통해 컨테이너 내부를 빠져나옵니다.
 
 root@509c6b51bafb:/# exit
-exit
 ```
+
+
+
+
+### 8-3. 컨테이너 종료/유지(attach/exec 등)의 차이 관찰 및 간단 정리
+
+- docker attach
+
+test-ubuntu 라는 이름의 컨테이너를 생성 (docker run)하고 백그라운드 (-d)에서 실행합니다. 
+
+ubuntu:latest 우분투 최신 버전을 사용하며, 컨테이너가 켜진 직후에 아무 작업도 없이 300초 동안 대기하는 테스트용 컨테이너를 실행합니다.
+
+컨테이너를 종료하기 위에 Ctrl+P 명령어를 실행하였으나 빠져나오지 않아 Ctrl+C 를 사용하여 빠져나왔(종료)습니다.
+
+
+```
+sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker run -d --name test-ubuntu ubuntu:latest sleep 300
+[sudo: authenticate] Password:
+234183d31b354f1e252acd84d658e5c2c845a81f60a81ccf7d3af3cf33ba75f9
+sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker attach test-ubuntu
+^P
+^P
+^C^C^C
+got 3 SIGTERM/SIGINTs, forcefully exiting
+```
+
+  관찰 : sudo docker attach test-ubuntu 를 실행했을 때 화면이 아무 반응 없이 멈춘 것처럼 보였습니다.
+
+  결과 : 빠져나오려고 Ctrl+C 를 연타 하자마자 컨테이너가 강제 종료 되었습니다.
+
+  알 수 있는 점 : attach는 컨테이너 메인 프로세스에 직접 연결되어 사용자가 연결을 끊거나 종료 신호(Ctrl+C, exit)를 주면 컨테이너 전체가 멈춥니다.
+
+ 
+
+- docker exec
+
+```
+sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker exec -it test-ubuntu bash
+root@234183d31b35:/# ls
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+root@234183d31b35:/# echo "Test"
+Test
+root@234183d31b35:/# exit
+exit
+sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker ps
+[sudo: authenticate] Password:
+CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS       PORTS                                     NAMES
+c384b6b43fc8   nginx:alpine   "/docker-entrypoint.…"   3 hours ago   Up 2 hours   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-nginx-container
+```
+
+
+  관찰 : 종료된 컨테이너를 다시 start 한 후 sudo docker exec -t test-ubuntu bash 로 진입했을 때 내부 셸이 정상적으로 보여지고, 기본 명령어인 ls, echo와 같은 명령어가 잘 수행되었습니다.
+
+  결과 : 작업이 끝난 후 exit 로 빠져 나온 후 
 
 
