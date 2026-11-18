@@ -797,6 +797,9 @@ c384b6b43fc8   nginx:alpine   "/docker-entrypoint.…"   3 hours ago   Up 2 hour
 
   관찰 : 종료된 컨테이너를 다시 start 한 후 sudo docker exec -t test-ubuntu bash 로 진입했을 때 내부 셸이 정상적으로 보여지고, 기본 명령어인 ls, echo와 같은 명령어가 잘 수행되었습니다.
 
-  결과 : 작업이 끝난 후 exit 로 빠져 나온 후 
+  결과 : 작업이 끝난 후 exit 로 빠져 나온 후 sudo docker ps 명령어로 확인해보니...................................... 
+  좀 더 고민해보자.....
 
+
+## 9. 기존 Dockerfile 기반 커스텀 이미지 제작
 
