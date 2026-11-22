@@ -868,9 +868,9 @@ fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute      
 - **선택한 기존 베이스:** `nginx:alpine` 공식 이미지 (경량 Alpine Linux 기반 웹 서버 이미지)
 
 
-- **커스텀 포인트 및 목적** : `COPY index.html /usr/share/nginx/html/index.html`: 기본 NGINX 환영 화면 대신 직접 만든 `index.html`이 뜨도록 덮어쓰기
+- **커스텀 포인트 및 목적** : `COPY index.html /usr/share/nginx/html/index.html`: 기본 NGINX 환영 화면 대신 직접 만든 `index.html`이 뜨도록 덮어쓰기  
 
-
+---
 
 - 현재 디렉토리에 커스텀 웹페이지인 `index.html`과 `Dockerfile`을 생성합니다.
 
@@ -953,7 +953,16 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   55 seconds ago   U
 
 ## 9. 포트매핑 접속 증거
 
-브라우저 접속 화면과 curl 응답 결과입니다.
+### 9-1. 포트 매핑이 필요한 이유
+
+- **외부 접속 연결**: 컨테이너 안의 포트는 바깥과 격리되어 있어서, -p 8080:80처럼 연결해 줘야 브라우저나 curl에서 localhost:8080으로 접속할 수 있습니다.
+
+- **포트 충돌 방지**: 호스트 포트를 8080, 8081처럼 다르게 지정하면 같은 앱을 여러 개 띄울 때 포트가 겹치지 않습니다.
+
+---
+
+
+### 9-2. 브라우저 접속 화면과 curl 응답 결과
 
 `8080` 포트를 컨테이너 내부 NGINX 기본 포트 `80`번에 연결하여 외부(`localhost:8080`)에서 접근 가능하도록 합니다.
 
@@ -976,5 +985,95 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   27 minutes ago   U
 ```
 
 ![커스텀 NGINX 화면](./screenshot/dockerfile-custom%20img-nginx-localhost-8080.png)
+
+
+## 10. Docker 볼륨 영속성 검증
+
+### 10-1. 볼륨 영속성에 대한 설명
+
+- **데이터 유지**: 컨테이너를 지우면 안에 만든 파일도 함께 사라지지만, 볼륨에 저장한 데이터는 컨테이너가 삭제되어도 그대로 남습니다.
+
+- **재사용 및 공유**: 새 컨테이너를 같은 볼륨에 연결하면 기존 데이터를 그대로 이어서 쓰거나 여러 컨테이너가 함께 쓸 수 있습니다.
+
+- **주의할 점**: 단, 컨테이너 삭제가 아닌 볼륨 자체 삭제(`docker volume rm`)를 수행하면 해당 볼륨의 데이터도 함께 사라집니다.
+
+### 10-2. 볼륨 영속성 검증
+
+- `docker volume create my-vol`으로 볼륨을 생성하고, 컨테이너 실행 시 `-v my-vol:/data` 옵션으로 컨테이너의 `/data` 디렉터리와 연결합니다.
+
+#### (1) Docker 볼륨 생성 (my-vol)
+
+데이터를 보관할 볼륨을 생성해줍니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker volume create my-vol
+```
+
+볼륨 생성 결과를 확인합니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker volume inspect my-vol
+[
+    {
+        "CreatedAt": "2026-11-22T19:41:31Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/my-vol/_data",
+        "Name": "my-vol",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+```
+#### (2) 볼륨 연결 및 테스트 데이터 기록하기
+
+my-vol을 컨테이너의 /data 경로에 연결(-v my-vol:/data)하여 실행하고, 그 안에 텍스트 파일을 만들어줍니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker run -d --name vol-test-1 -v my-vol:/data alpine sleep infinity
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+881fc932939e: Already exists 
+Digest: sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+Status: Downloaded newer image for alpine:latest
+d0150c1f879e61ea5b408cae630c34198e22ae527a949715522bffb8236699e6
+```
+
+my-vol 볼륨 안에 hello가 적힌 hello.txt를 만들어보고 확인했습니다.
+
+```
+docker exec vol-test-1 sh -c 'echo "hello" > /data/hello.txt'
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker exec vol-test-1 cat /data/hello.txt
+hello
+```
+
+### (3) 기존 컨테이너 강제 삭제하기
+
+데이터가 컨테이너 내부가 아닌 볼륨에 남는지 확인하기 위해 vol-test-1 컨테이너를 삭제합니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker rm -f vol-test-1
+vol-test-1
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker ps -a
+CONTAINER ID   IMAGE               COMMAND                  CREATED             STATUS                   PORTS        NAMES
+ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   About an hour ago   Up About an hour         0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
+fff1c9491acd   ubuntu:latest       "bash"                   2 hours ago         Exited (0) 2 hours ago        test-con
+```
+
+vol-test-1이 보이지 않습니다.
+
+### (4) 새 컨테이너를 연결해 데이터 유지 검증
+
+삭제된 컨테이너 대신 새 컨테이너(vol-test-2)를 띄워 같은 볼륨(my-vol)을 /data에 연결한 뒤 기존 파일이 살아 있는지 확인합니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker run --name vol-test-2 -v my-vol:/data alpine cat /data/hello.txt
+hello
+```
+`vol-test-1` 컨테이너에 `my-vol`을 연결해 `/data/hello.txt`에 내용을 저장한 뒤, `vol-test-1` 컨테이너를 삭제했습니다.
+  - 이후 새 컨테이너(`vol-test-2`)를 띄워 같은 `my-vol` 볼륨을 연결하고 `/data/hello.txt`를 확인했을 때 기존 내용(`hello`)이 그대로 출력되었습니다.
+
+  
+
 
 
