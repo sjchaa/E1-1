@@ -864,5 +864,117 @@ fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute      
 
 ## 9. 기존 Dockerfile 기반 커스텀 이미지 제작
 
-11
+
+- **선택한 기존 베이스:** `nginx:alpine` 공식 이미지 (경량 Alpine Linux 기반 웹 서버 이미지)
+
+
+- **커스텀 포인트 및 목적** : `COPY index.html /usr/share/nginx/html/index.html`: 기본 NGINX 환영 화면 대신 직접 만든 `index.html`이 뜨도록 덮어쓰기
+
+
+
+- 현재 디렉토리에 커스텀 웹페이지인 `index.html`과 `Dockerfile`을 생성합니다.
+
+- `index.html` 생성 명령
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ cat << 'EOF' > index.html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom Nginx Page</title>
+</head>
+<body>
+  <h1>Hello from my-custom-img:1.0!</h1>
+  <p>Custom static content on nginx:alpine.</p>
+</body>
+</html>
+```
+
+- `Dockerfile` 생성 명령
+
+```
+EOF
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ cat << 'EOF' > Dockerfile
+FROM nginx:alpine
+COPY index.html /usr/share/nginx/html/index.html
+EOF
+```
+
+- 커스텀 이미지 빌드 실행
+
+```
+docker build -t my-custom-img:1.0 .
+[+] Building 6.9s (7/7) FINISHED                  docker:default
+ => [internal] load build definition from Dockerfile        0.0s
+ => => transferring dockerfile: 104B                        0.0s
+ => [internal] load metadata for docker.io/library/nginx:a  2.0s
+ => [internal] load .dockerignore                           0.0s
+ => => transferring context: 2B                             0.0s
+ => [1/2] FROM docker.io/library/nginx:alpine@sha256:fb465  4.5s
+ => => resolve docker.io/library/nginx:alpine@sha256:fb465  0.0s
+ => => sha256:fb4658584bd9a916ffb6f6e365 10.33kB / 10.33kB  0.0s
+ => => sha256:62d1c420c34ae91f7bffd34990 12.32kB / 12.32kB  0.0s
+ => => sha256:881fc932939efef04ca120ad44bb 3.85MB / 3.85MB  0.8s
+ => => sha256:04c3905a997c5ada93c8e4ad6c8d593e 627B / 627B  0.4s
+ => => sha256:e68702efeaad0be9ced2b4d1cedb 2.50kB / 2.50kB  0.0s
+ => => sha256:77a3bfea78f562fc46a238affde2 1.94MB / 1.94MB  0.3s
+ => => sha256:7cb374baf96870045ef10fb2275d30d8 965B / 965B  0.6s
+ => => sha256:4c8c172c658661b7927fad4ab766c7e6 404B / 404B  0.7s
+ => => sha256:1dc588c89da10830dde2a359d1b4 1.21kB / 1.21kB  0.9s
+ => => sha256:61d8f4c85a745813b78f7b3ea04d 1.40kB / 1.40kB  0.9s
+ => => extracting sha256:881fc932939efef04ca120ad44bbd2c09  0.4s
+ => => sha256:c4f3d97811f679e18a79055549 20.54MB / 20.54MB  2.2s
+ => => extracting sha256:77a3bfea78f562fc46a238affde2e413f  0.3s
+ => => extracting sha256:04c3905a997c5ada93c8e4ad6c8d593e0  0.0s
+ => => extracting sha256:7cb374baf96870045ef10fb2275d30d89  0.0s
+ => => extracting sha256:4c8c172c658661b7927fad4ab766c7e6c  0.0s
+ => => extracting sha256:1dc588c89da10830dde2a359d1b421e38  0.0s
+ => => extracting sha256:61d8f4c85a745813b78f7b3ea04d0268f  0.0s
+ => => extracting sha256:c4f3d97811f679e18a790555496d98de9  1.9s
+ => [internal] load build context                           0.0s
+ => => transferring context: 259B                           0.0s
+ => [2/2] COPY index.html /usr/share/nginx/html/index.html  0.2s
+ => exporting to image                                      0.1s
+ => => exporting layers                                     0.0s
+ => => writing image sha256:466a696c8a345da23d426a1636a9b2  0.0s
+ => => naming to docker.io/library/my-custom-img:1.0        0.0s
+ ```
+
+ - 빌드된 커스텀 이미지를 실행합니다.
+
+ ```
+ docker run -d --name my-web -p 8080:80 my-custom-img:1.0
+ab278b7f1f1641f9cf929962a21cb9d33431c11f0811401ccecddbd4edb6808d
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker ps
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS          PORTS                                     NAMES
+ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   55 seconds ago   Up 54 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
+```
+
+## 9. 포트매핑 접속 증거
+
+브라우저 접속 화면과 curl 응답 결과입니다.
+
+`8080` 포트를 컨테이너 내부 NGINX 기본 포트 `80`번에 연결하여 외부(`localhost:8080`)에서 접근 가능하도록 합니다.
+
+```
+curl -s http://localhost:8080
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom Nginx Page</title>
+</head>
+<body>
+  <h1>Hello from my-custom-img:1.0!</h1>
+  <p>Custom static content on nginx:alpine.</p>
+</body>
+</html>
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ docker ps
+CONTAINER ID   IMAGE               COMMAND                  CREATED          STATUS          PORTS                                     NAMES
+ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   27 minutes ago   Up 27 minutes   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
+```
+
+![커스텀 NGINX 화면](./screenshot/dockerfile-custom%20img-nginx-localhost-8080.png)
+
 
