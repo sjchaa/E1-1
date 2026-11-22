@@ -745,60 +745,121 @@ root@509c6b51bafb:/# exit
 ```
 
 
-
-
 ### 8-3. 컨테이너 종료/유지(attach/exec 등)의 차이 관찰 및 간단 정리
 
-- docker attach
-
-test-ubuntu 라는 이름의 컨테이너를 생성 (docker run)하고 백그라운드 (-d)에서 실행합니다. 
-
-ubuntu:latest 우분투 최신 버전을 사용하며, 컨테이너가 켜진 직후에 아무 작업도 없이 300초 동안 대기하는 테스트용 컨테이너를 실행합니다.
-
-컨테이너를 종료하기 위에 Ctrl+P 명령어를 실행하였으나 빠져나오지 않아 Ctrl+C 를 사용하여 빠져나왔(종료)습니다.
+실행 중인 `ubuntu:latest` 컨테이너(`test-con`, 메인 프로세스 `bash`)를 대상으로 `docker attach`와 `docker exec`의 동작 차이를 확인했습니다.
 
 
-```
-sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker run -d --name test-ubuntu ubuntu:latest sleep 300
-[sudo: authenticate] Password:
-234183d31b354f1e252acd84d658e5c2c845a81f60a81ccf7d3af3cf33ba75f9
-sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker attach test-ubuntu
-^P
-^P
-^C^C^C
-got 3 SIGTERM/SIGINTs, forcefully exiting
-```
+#### 핵심 차이 요약
 
-  관찰 : sudo docker attach test-ubuntu 를 실행했을 때 화면이 아무 반응 없이 멈춘 것처럼 보였습니다.
+| 구분 | `docker attach` | `docker exec` |
+| :--- | :--- | :--- |
+| **연결 대상** | 실행 중인 컨테이너의 **기존 메인 프로세스(PID 1)**에 직접 연결 | 실행 중인 컨테이너 내부에 **새로운 프로세스(별도 셸/명령)**를 추가 실행 |
+| **`exit` 종료 시** | 메인 프로세스가 종료되면서 **컨테이너 상태가 `Exited`로 변경** | 추가 실행한 프로세스만 종료되고 **컨테이너 상태는 `Up`으로 유지** |
+| **정지 상태 실행** | 컨테이너가 `Up` 상태일 때 연결 가능 (`Exited` 상태면 먼저 `docker start` 필요) | 컨테이너가 정지(`is not running`) 상태일 때 실행 불가 |
 
-  결과 : 빠져나오려고 Ctrl+C 를 연타 하자마자 컨테이너가 강제 종료 되었습니다.
 
-  알 수 있는 점 : attach는 컨테이너 메인 프로세스에 직접 연결되어 사용자가 연결을 끊거나 종료 신호(Ctrl+C, exit)를 주면 컨테이너 전체가 멈춥니다.
 
- 
+** 실습 실행 
 
-- docker exec
+1. **백그라운드 컨테이너 실행 및 `docker attach` 후 `exit` 종료 확인**
+
+
+  - `docker attach test-con`으로 진입해 `ls`, `echo "attach test"`를 실행한 뒤 `exit`로 빠져나오자 메인 `bash` 프로세스가 종료되면서 컨테이너가 멈췄습니다.
+
+
+  - 이 직후 `docker exec -it test-con bash`를 호출했을 때 컨테이너가 실행 중이 아니라는 오류(`is not running`)가 발생하여 `attach` 종료가 컨테이너 정지로 이어졌음을 확인했습니다.
 
 ```
-sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker exec -it test-ubuntu bash
-root@234183d31b35:/# ls
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker run -dit --name test-con ubuntu:latest bash
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+517b871c26ea: Pull complete 
+96aae9022e0e: Pull complete 
+Digest: sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
+Status: Downloaded newer image for ubuntu:latest
+fff1c9491acde2b1dae4186713c908d840b3c39cddf8a5bbb413ee84dd465b78
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps -a
+CONTAINER ID   IMAGE           COMMAND   CREATED          STATUS          PORTS     NAMES
+fff1c9491acd   ubuntu:latest   "bash"    14 seconds ago   Up 13 seconds             test-con
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker attach test-con
+root@fff1c9491acd:/# ls
 bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
 boot  etc  lib   media  opt  root  sbin  sys  usr
-root@234183d31b35:/# echo "Test"
-Test
-root@234183d31b35:/# exit
+root@fff1c9491acd:/# echo "attach test"
+attach test
+root@fff1c9491acd:/# exit
 exit
-sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker ps
-[sudo: authenticate] Password:
-CONTAINER ID   IMAGE          COMMAND                  CREATED       STATUS       PORTS                                     NAMES
-c384b6b43fc8   nginx:alpine   "/docker-entrypoint.…"   3 hours ago   Up 2 hours   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-nginx-container
+```
+
+`exit`로 빠져나오니, STATUS가 Exited (0) 6 seconds ago 상태로 전환되어 종료되었음을 확인했습니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker attach test-con
+root@fff1c9491acd:/# ls
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+root@fff1c9491acd:/# echo "attach test"
+attach test
+root@fff1c9491acd:/# exit
+exit
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps -a
+CONTAINER ID   IMAGE           COMMAND   CREATED         STATUS                     PORTS     NAMES
+fff1c9491acd   ubuntu:latest   "bash"    8 minutes ago   Exited (0) 6 seconds ago             test-con
 ```
 
 
-  관찰 : 종료된 컨테이너를 다시 start 한 후 sudo docker exec -t test-ubuntu bash 로 진입했을 때 내부 셸이 정상적으로 보여지고, 기본 명령어인 ls, echo와 같은 명령어가 잘 수행되었습니다.
+```attach``` 로 진입하여 exit 로 종료한 후 ```docker exec``` 실행 시 에러가 발생한 모습
 
-  결과 : 작업이 끝난 후 exit 로 빠져 나온 후 sudo docker ps 명령어로 확인해보니...................................... 
-  좀 더 고민해보자.....
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker exec -it test-con bash
+Error response from daemon: container fff1c9491acde2b1dae4186713c908d840b3c39cddf8a5bbb413ee84dd465b78 is not running
+```
+
+2. **백그라운드 컨테이너 실행 및 `docker attach` 후 `exit` 종료 확인**
+
+  - 컨테이너 재시작(`docker start`) 및 `docker exec` 후 `exit` 시 컨테이너가 유지되는 것을 확인할 수 있습니다.
+
+  - `docker start test-con`으로 컨테이너를 다시 살린 뒤 `docker exec -it test-con bash`로 새 셸을 열어 `ls`, `echo "exec test"`를 실행하고 `exit`로 빠져 나왔습니다.
+
+  - 이후 `docker ps -a`에서 STATUS가 Up About a minute으로 유지되는 것을 확인했습니다.
+
+
+컨테이너 재시작 `docker start`
+
+  ```
+  sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker start test-con
+test-con
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps
+CONTAINER ID   IMAGE           COMMAND   CREATED         STATUS          PORTS     NAMES
+fff1c9491acd   ubuntu:latest   "bash"    5 minutes ago   Up 20 seconds             test-con
+```
+
+`docker exec`로 진입 후 `ls`, `echo` 명령어 입력 확인 후 `exit`로 빠져나오자, STATUS가 Up About a minute으로 유지되고 있습니다.
+
+```
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker exec -it test-con bash
+root@fff1c9491acd:/# ls
+bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
+boot  etc  lib   media  opt  root  sbin  sys  usr
+root@fff1c9491acd:/# echo "exec test"
+exec test
+root@fff1c9491acd:/# exit
+exit
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps -a
+CONTAINER ID   IMAGE           COMMAND   CREATED         STATUS              PORTS     NAMES
+fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute             test-con
+```
+
+4. **관찰 요약** 
+
+- **docker exec**: 실행 중인 컨테이너에 별도의 새 프로세스(셸, 명령)를 추가 실행한다. 해당 셸에서 exit로 종료해도 컨테이너 본체는 Up 상태를 유지한다.
+
+- **docker attach**: 실행 중인 컨테이너의 기존 메인 프로세스에 직접 연결한다. 연결된 메인 프로세스를 exit로 종료하면 컨테이너도 함께 종료(Exited)된다.
+
+- **비유로 차이를 이해하는 방법**
+
+실행중인 컨테이너를 영업 중인 식당에 비유하면 `docker attach` 는 메인 요리사와 직접 연결되는 개념이라 메인 요리사가 퇴근하면 영업이 종료되는 개념, `docker exec`는 파트타임 보조 일꾼이 투입되는 개념으로 파트타임 직원이 퇴근해도 영업장은 정규 시간동안 그대로 유지되는 것과 같습니다.
 
 
 ## 9. 기존 Dockerfile 기반 커스텀 이미지 제작
