@@ -1146,3 +1146,50 @@ sj_ee_6255@GNIA-C202-G06:~/E1-1$ grep -nE "ghp_|github_pat_|BEGIN .*PRIVATE KEY|
 ```
 
 아무것도 안뜨고 민감 정보 미검출이 나왔습니다. 스크린샷에 있는 정보는 눈으로 직접 확인해보았습니다.
+
+
+## 13. 트러블 슈팅
+
+### 13-1. docker attach 후 exit 종료로 인한 docker exec 실행 불가
+
+- **문제**: docker attach test-con 세션에서 exit로 빠져나온 직후에 docker exec -it test-con bash 를 실행하자 컨테이너가 실행 중이 아니라는 오류가 발생했습니다.
+
+```text
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker exec -it test-con bash
+Error response from daemon: container fff1c9491acde2b1dae4186713c908d840b3c39cddf8a5bbb413ee84dd465b78 is not running
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker start test-con
+test-con
+```
+
+- **원인 가설**: docker attach 는 컨테이너 메인 bash 에 직접 연결되는 개념이라, 연결된 셸에서 exit를 입력하면 메인 프로세스가 종료되어 컨테이너 전체가 멈추기 때문에 실행중인 컨테이너 대상 명령인 docker exec 가 실패한 것으로 확인했습니다.
+
+- **확인**: 종료된 컨테이너를 다시 실행하기 위해 `docker start test-con`으로 재시작한 뒤 `docker exec -it test-con bash`로 진입해 `ls`, `echo "exec test"`, `exit`를 실행했을 때 컨테이너가 `Up` 상태로 유지됨을 확인했습니다.
+
+```
+
+# 컨테이너 재시작
+
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker start test-con
+test-con
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+fff1c9491acd ubuntu:latest "bash" 5 minutes ago Up 20 seconds test-con
+```
+
+```
+# 컨테이너를 재시작하자 docker exec로 정상 진입하여 명령어를 입력할 수 있게 됨
+
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker exec -it test-con bash
+root@fff1c9491acd:/# ls
+bin dev home lib64 mnt proc run srv tmp var
+boot etc lib media opt root sbin sys usr
+root@fff1c9491acd:/# echo "exec test"
+exec test
+root@fff1c9491acd:/# exit
+exit
+sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps -a
+CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+fff1c9491acd ubuntu:latest "bash" 6 minutes ago Up About a minute test-con
+```
+
+
