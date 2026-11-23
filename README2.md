@@ -456,7 +456,6 @@ c384b6b43fc854092df79038bbb1345a1693c401c5fc42ecf4a7f5d135a9f290
 아파트에 비유하면 `localhost`는 아파트 전체, 컨테이너 (`my-nginx-container`)는 아파트 안의 작은 방, 8080번 포트는 아파트 바깥에서 두드리는 임시 접견 문, 80번 포트는 작은 방 안에 있는 전용 손님 문으로 이해하면 좋습니다.
 
 
-
 - **컨테이너 목록 확인** 
 
 현재 실행 중인 컨테이너 목록을 확인합니다. (docker ps)
@@ -729,6 +728,8 @@ c384b6b43fc8   my-nginx-container   0.00%     19.51MiB / 23.47GiB   0.08%     1.
 
 ### 8-1. hello-world 실행 성공 기록
 
+위에 설명한 것과 같이 hello-world 는 테스트 안내용 컨테이너라서 메시지 출력이 끝나면 바로 종료됩니다.
+
 ```
 sj_ee_6255@GNIA-C202-D06:~/E1-1/myapp$ sudo docker run hello-world
 Unable to find image 'hello-world:latest' locally
@@ -806,8 +807,7 @@ root@509c6b51bafb:/# exit
 | **정지 상태 실행** | 컨테이너가 `Up` 상태일 때 연결 가능 (`Exited` 상태면 먼저 `docker start` 필요) | 컨테이너가 정지(`is not running`) 상태일 때 실행 불가 |
 
 
-
-** 실습 실행 
+**실습 실행**
 
 1. **백그라운드 컨테이너 실행 및 `docker attach` 후 `exit` 종료 확인**
 
@@ -842,14 +842,6 @@ exit
 `exit`로 빠져나오니, STATUS가 Exited (0) 6 seconds ago 상태로 전환되어 종료되었음을 확인했습니다.
 
 ```
-sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker attach test-con
-root@fff1c9491acd:/# ls
-bin   dev  home  lib64  mnt  proc  run   srv  tmp  var
-boot  etc  lib   media  opt  root  sbin  sys  usr
-root@fff1c9491acd:/# echo "attach test"
-attach test
-root@fff1c9491acd:/# exit
-exit
 sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker ps -a
 CONTAINER ID   IMAGE           COMMAND   CREATED         STATUS                     PORTS     NAMES
 fff1c9491acd   ubuntu:latest   "bash"    8 minutes ago   Exited (0) 6 seconds ago             test-con
@@ -906,7 +898,7 @@ fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute      
 
 - **비유로 차이를 이해하는 방법**
 
-실행중인 컨테이너를 영업 중인 식당에 비유하면 `docker attach` 는 메인 요리사와 직접 연결되는 개념이라 메인 요리사가 퇴근하면 영업이 종료되는 개념, `docker exec`는 파트타임 보조 일꾼이 투입되는 개념으로 파트타임 직원이 퇴근해도 영업장은 정규 시간동안 그대로 유지되는 것과 같습니다.
+실행중인 컨테이너를 영업 중인 식당에 비유하면 `docker attach` 는 메인 요리사와 직접 연결되는 개념이라 메인 요리사가 퇴근하면 식당 영업이 종료되는 개념, `docker exec`는 파트타임 보조 일꾼이 투입되는 개념으로 파트타임 직원이 퇴근해도 영업장은 정규 시간동안 그대로 유지되는 것과 같습니다.
 
 
 ## 9. 기존 Dockerfile 기반 커스텀 이미지 제작
@@ -941,7 +933,6 @@ sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ cat << 'EOF' > index.html
 - `Dockerfile` 생성 명령
 
 ```
-EOF
 sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ cat << 'EOF' > Dockerfile
 FROM nginx:alpine
 COPY index.html /usr/share/nginx/html/index.html
@@ -1038,6 +1029,68 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   27 minutes ago   U
 
 
 ## 10. 바인드 마운트 반영 + 볼륨 영속성 증거
+
+### 10-1. 바인트 마운트에 대한 설명
+
+- 내 컴퓨터(호스트)의 특정 폴더를 컨테이너 내부 경로에 직접 연결(`-v <호스트경로>:<컨테이너경로>`)하는 방식입니다. 호스트 폴더의 파일을 수정하면 컨테이너 이미지를 다시 빌드하지 않아도 변경 내용이 바로 반영됩니다.
+
+
+#### (1) 바인드 마운트용 호스트 폴더와 초기 파일 생성
+
+작업 폴더 아래에 테스트용 폴더 (bind-test)와 처음 보여줄 화면 (index.html)을 만들어줍니다. 
+
+```
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ echo "<h1>Before Host Edit</h>" > ~/E1-1/myapp/bind-test/index.html
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ cat ~/E1-1/myapp/bind-test/index.html
+<h1>Before Host Edit</h>
+```
+
+#### (2) 바인드 마운트 실행
+
+바인드 마운트를 실행합니다.
+
+```
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ sudo docker run -d --name bind-web -p 8081:80 -v ~/E1-1/myapp/bind-test:/usr/share/nginx/html nginx:alpine
+[sudo: authenticate] Password:               
+Unable to find image 'nginx:alpine' locally
+alpine: Pulling from library/nginx
+881fc932939e: Pull complete 
+77a3bfea78f5: Pull complete 
+04c3905a997c: Pull complete 
+7cb374baf968: Pull complete 
+4c8c172c6586: Pull complete 
+1dc588c89da1: Pull complete 
+61d8f4c85a74: Pull complete 
+c4f3d97811f6: Pull complete 
+Digest: sha256:fb4658584bd9a916ffb6f6e365f97c25cfdb2923801f551ea08356e695f14ff7
+Status: Downloaded newer image for nginx:alpine
+eea63344289c6b5850ac43b0d9c2d2f614f5fa817155dbcf8dc4e2130ebc14a9
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ sudo docker ps
+CONTAINER ID   IMAGE          COMMAND                  CREATED         STATUS         PORTS          NAMES
+eea63344289c   nginx:alpine   "/docker-entrypoint.…"   3 seconds ago   Up 3 seconds   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   bind-web
+```
+#### (3) 호스트 파일 수정 전 현재 웹 서버가 어떤 내용을 돌려주는지 확인
+
+```
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ curl -s http://localhost:8081
+<h1>Before Host Edit</h>
+```
+
+![호스트 파일 수정 전 내용 확인](./screenshot/host-before.png)
+
+
+#### (4) 호스트 파일 수정 및 변경 후 응답
+
+```
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ echo "<h1>After Host Edit</h1>" > ~/E1-1/myapp/bind-test/index.html
+sj_ee_6255@GNIA-C202-K01:~/E1-1/myapp$ curl -s http://localhost:8081
+<h1>After Host Edit</h1>
+```
+
+![호스트 파일 수정 후 내용 확인](./screenshot/host-after.png)
+
+수정 후 수정한 문구가 출력되어 바인드 마운트가 제대로 반영되었다는 것을 확인할 수 있습니다.
+
 
 ### 10-1. 볼륨 영속성에 대한 설명
 
