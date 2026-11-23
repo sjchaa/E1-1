@@ -23,7 +23,30 @@
 
 ## 4. 검증 방법 및 터미널 조작 로그
 
-### (1) 현재 위치 확인
+### (1). 프로젝트 디렉토리 구조 및 설계 기준
+
+```text
+E1-1/
+├─ myapp/
+│   └─ bind-test/
+├─ screenshots/
+└─ README.md
+text
+```
+
+- `E1-1` : 미션 전체 최상위 디렉토리 
+
+- `E1-1/myapp` : `Dockerfile`, 웹페이지(`index.html`) 등 빌드 및 컨테이너 실행용 작업 폴더
+
+- `E1-1/myapp/bind-test` : 바인드마운트 대상 폴더(호스트 파일 수정 전/후 변경사항 반영을 위해 만듦)
+
+- `E1-1/screenshots` : 포트매핑 접속 화면, 커스텀이미지, github 연동 스크린샷 보관 폴더
+
+- `E1-1/README.md` : 최종 기술문서 
+
+
+
+### (2) 현재 위치 확인
 
 **절대경로**: 최상위 기준점(`/`)부터 시작하는 **전체 주소**로, 지금 내 위치가 어디든 항상 같은 곳을 가리킵니다. 아래 출력 결과인 `/home/sj_ee_6255/projects/myapp`이 절대경로입니다.
 
@@ -43,7 +66,7 @@ sj_ee_6255@GNIA-C202-G06:~/E1-1/myapp$ cd ..
 sj_ee_6255@GNIA-C202-G06:~/E1-1$ 
 ```
 
-### (2) 목록 확인(숨김 파일 포함) (ls -la)
+### (3) 목록 확인(숨김 파일 포함) (ls -la)
 
 ```
 sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ la -la
@@ -56,7 +79,7 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 -rw-r--r-- 1 sj_ee_6255 sj_ee_6255   76 Nov  9 23:02 index.html
 ```
 
-### (3) 디렉토리 생성 및 이동 (mkdir, cd 명령어 사용)
+### (4) 디렉토리 생성 및 이동 (mkdir, cd 명령어 사용)
 
 ```
 sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ mkdir test_dir
@@ -65,7 +88,7 @@ sj_ee_6255@GNIA-C202-B06:~/projects/myapp/test_dir$ pwd
 /home/sj_ee_6255/projects/myapp/test_dir
 ```
 
-### (4) 빈 파일 생성 (touch 명령어 사용)
+### (5) 빈 파일 생성 (touch 명령어 사용)
 ```
 sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ touch test.txt
 sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ ls -la
@@ -80,7 +103,7 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 drwxr-xr-x 2 sj_ee_6255 sj_ee_6255 4096 Nov 10 23:19 test_dir
 ```
 
-### (5) 파일 내용 입력 및 확인 (echo, cat)
+### (6) 파일 내용 입력 및 확인 (echo, cat)
 
 파일 내용을 입력하고 출력해 확인합니다.
 
@@ -90,7 +113,7 @@ sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ cat test.txt
 test 123456789
 ```
 
-### (6) 파일 복사 (cp)
+### (7) 파일 복사 (cp)
 
 파일을 다른 이름으로 복사합니다. 
 test.txt 파일을 test1.txt로 복사합니다.
@@ -111,7 +134,7 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 drwxr-xr-x 2 sj_ee_6255 sj_ee_6255 4096 Nov 10 23:19 test_dir
 ```
 
-### (7) 파일 이동 및 이름 변경 (mv)
+### (8) 파일 이동 및 이름 변경 (mv)
 
 파일의 이름을 바꾸거나 위치를 이동합니다.  
 복사한 test_1.txt 파일의 이름을 test_2.txt로 변경했습니다.
@@ -131,7 +154,7 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 drwxr-xr-x 2 sj_ee_6255 sj_ee_6255 4096 Nov 10 23:19 test_dir
 ```
 
-### (8) 디렉토리 및 파일 삭제 (rm -rf, rm)
+### (9) 디렉토리 및 파일 삭제 (rm -rf, rm)
 
 디렉토리와 내부 파일까지 모두 삭제합니다.  
 (디렉토리 삭제는 rm -rf 명령어를 사용하여 영구 삭제 했습니다.)
@@ -178,16 +201,16 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 
 ### (2) 권한 확인 (ls -l)
 
-파일과 디렉토리의 현재 권한`rmw`를 확인하고, `chmod` 명령어를 통해 권한을 변경한 뒤 변경 전/후를  비교하였습니다.
+파일과 디렉토리의 현재 권한`rwx`를 확인하고, `chmod` 명령어를 통해 권한을 변경한 뒤 변경 전/후를  비교하였습니다.
 
 
-#### - 파일 권한 확인 및 변경
+#### - 파일 권한 확인 및 변경 (`abcdefg.txt`)
 
-임의로 텍스트 파일을 생성한 후 권한 확인과 변경을 진행합니다.
+임의로 텍스트 파일(`abcdefg.txt`)을 생성한 후 권한 확인과 변경을 진행합니다.
 
-touch 명령어로 파일 생성  
-ls -l 명령어로 권한 확인  
-chmod 명령어로 권한 변경 진행
+`touch` 명령어로 파일 생성  
+`ls -l` 명령어로 권한 확인  
+`chmod` 명령어로 권한 변경 진행
 
 
 ```
@@ -198,6 +221,8 @@ total 12
 -rw-r--r-- 1 sj_ee_6255 sj_ee_6255    0 Nov 17 23:49 abcdefg.txt
 -rw-r--r-- 1 sj_ee_6255 sj_ee_6255   76 Nov 17 21:55 index.html
 ```
+
+
 
 chmod 755 명령어로 
 
@@ -994,6 +1019,11 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   55 seconds ago   U
 
 
 ### 9-1. 포트 매핑이 필요한 이유
+
+- 컨테이너는 네트워크 **네임스페이스(Network Namespace)**라는 기능 때문에 내 컴퓨터(호스트)와 따로 떨어진 **독립된 네트워크 공간(IP·포트 체계)**을 씁니다. 
+
+  쉽게 말해 컨테이너마다 문과 번호판이 따로 달린 **전용 방**이 생기는 셈이라, 바깥에서 안쪽 포트로 곧장 들어갈 수 없습니다. 그래서 내 컴퓨터의 브라우저나 `curl`로 접속하려면 호스트 포트와 컨테이너 포트를 이어 주는 **포트 포워딩(`-p <호스트포트>:<컨테이너포트>`)** 이라는 연결 통로를 만들어 주어야 합니다.
+
 
 - **외부 접속 연결**: 컨테이너 안의 포트는 바깥과 격리되어 있어서, -p 8080:80처럼 연결해 줘야 브라우저나 curl에서 localhost:8080으로 접속할 수 있습니다.
 
