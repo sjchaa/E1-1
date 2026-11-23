@@ -1192,4 +1192,36 @@ CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
 fff1c9491acd ubuntu:latest "bash" 6 minutes ago Up About a minute test-con
 ```
 
+### 13-2. 경로를 잘못 입력해 폴더 이동 실패 (No such file or directory)
 
+
+```text
+sj_ee_6255@GNIA-C202-G06:~$ cd ~/E-1/myapp
+bash: cd: /home/sj_ee_6255/E-1/myapp: No such file or directory
+```
+
+- **문제**: 작업 폴더로 이동하려 할 때 `cd ~/E-1/myapp` 명령에서 `No such file or directory` 오류가 발생함.
+- **원인 가설**: 실제 디렉터리 이름이 `E-1`이 아니라 `E1-1`이거나, 해당 경로가 현재 위치에 존재하지 않아 이동에 실패했을 것임.
+- **확인 및 해결**: `cd ~/E-1/myapp` 실행 시 경로를 찾을 수 없다는 에러가 발생했고, `ls -la ~`로 실제 폴더 구성을 확인한 뒤 `cd ~/E1-1/myapp`로 이동함.
+
+```
+sj_ee_6255@GNIA-C202-G06:~$ ls -la
+total 56
+drwxr-x--- 8 sj_ee_6255 sj_ee_6255 4096 Nov 23 17:27 .
+drwxr-xr-x 3 root       root       4096 Nov 23 16:26 ..
+-rw------- 1 sj_ee_6255 sj_ee_6255  204 Nov 23 17:27 .bash_history
+-rw-r--r-- 1 sj_ee_6255 sj_ee_6255  220 Nov 23 16:26 .bash_logout
+-rw-r--r-- 1 sj_ee_6255 sj_ee_6255 3771 Nov 23 16:26 .bashrc
+drwxr-x--- 6 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:51 .cache
+drwxr-x--- 3 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:27 .config
+drwx------ 5 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:51 .copilot
+drwxr-xr-x 3 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:44 .dotnet
+-rw-r--r-- 1 sj_ee_6255 sj_ee_6255   77 Nov 23 16:46 .gitconfig
+-rw------- 1 sj_ee_6255 sj_ee_6255   20 Nov 23 16:46 .lesshst
+-rw-rw-r-- 1 sj_ee_6255 sj_ee_6255    0 Nov 23 16:27 .motd_shown
+-rw-r--r-- 1 sj_ee_6255 sj_ee_6255  807 Nov 23 16:26 .profile
+drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:44 .vscode-server
+drwxr-xr-x 6 sj_ee_6255 sj_ee_6255 4096 Nov 23 16:33 E1-1
+sj_ee_6255@GNIA-C202-G06:~$ cd ~/E1-1/myapp
+sj_ee_6255@GNIA-C202-G06:~/E1-1/myapp$ 
+```
