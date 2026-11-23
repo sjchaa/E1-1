@@ -1138,3 +1138,11 @@ github로 계속하기를 눌러 브라우저에서 github 아이디와 비밀�
 
 ### 12-1. 기술문서/로그/스크린샷 민감정보 마스킹
 
+grep 명령어를 사용하여 토큰 (ghp_, github pat_), 비밀번호 (password), 개인키 (private key), 시크릿 (secret)같은 문자열이 혹시 남아있는 지 찾아봅니다.
+
+```
+sj_ee_6255@GNIA-C202-G06:~/E1-1$ grep -nE "ghp_|github_pat_|BEGIN .*PRIVATE KEY|password=|secret=" README2.md 2>/dev/null || echo "민감 정보  미검출"
+민감 정보  미검출
+```
+
+아무것도 안뜨고 민감 정보 미검출이 나왔습니다. 스크린샷에 있는 정보는 눈으로 직접 확인해보았습니다.
