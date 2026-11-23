@@ -1074,6 +1074,67 @@ hello
   - 이후 새 컨테이너(`vol-test-2`)를 띄워 같은 `my-vol` 볼륨을 연결하고 `/data/hello.txt`를 확인했을 때 기존 내용(`hello`)이 그대로 출력되었습니다.
 
   
+## 11. Git 설정 및 GitHub 연동
+
+### 11-1. Git 사용자 정보/기본 브랜치 설정
+
+```
+sj_ee_6255@GNIA-C202-G06:~$ git config --global user.name "sjchaa"
+sj_ee_6255@GNIA-C202-G06:~$ git config --global user.email "sj_ee_@naver.com"
+sj_ee_6255@GNIA-C202-G06:~$ git config --global init.defaultBranch main
+sj_ee_6255@GNIA-C202-G06:~$ git config --list
+```
+
+### 11-2. git config --list 결과를 기록한다
+
+```
+sj_ee_6255@GNIA-C202-G06:~$ git config --list
+user.name=sjchaa
+user.email=sj_ee_@naver.com
+init.defaultbranch=main
+```
+
+### 11-3. github 로그인 및 저장소 연동 완료와 연동 증거
 
 
+cd ~/E1-1/myapp: 작업 디렉토리로 이동해서
+git remote -v: 이미 연결된 원격 저장소(origin)의 fetch/push 주소를 확인합니다.
+git status: 현재 작업 브랜치와 변경, 추가된 파일 상태를 확인합니다.
+
+
+```
+sj_ee_6255@GNIA-C202-G06:~/E1-1/myapp$ git remote -v
+origin  https://github.com/sjchaa/E1-1.git (fetch)
+origin  https://github.com/sjchaa/E1-1.git (push)
+sj_ee_6255@GNIA-C202-G06:~/E1-1/myapp$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+```
+
+### 11-4. VSCode 에서 Github 로그인 및 저장소 연동
+
+#### (1) github 로그인
+
+vscode 왼쪽 아래 사람 모양 아이콘을 클릭해서 github 로그인을 클릭합니다.
+
+![VSCode 로그인 과정1](./screenshot/vscode-login-1.png)
+
+github로 계속하기를 눌러 브라우저에서 github 아이디와 비밀번호를 입력하여 로그인합니다.
+
+![VSCode 로그인 과정2](./screenshot/vscode-login-2.png)
+
+아이디와 비밀번호를 입력하여 continue 버튼을 눌러서 github와 vscode를 연동해줍니다.
+
+![VSCode 로그인 과정3](./screenshot/vscode-login-3.png)
+
+이후 정상적으로 vscode에 연동된 것을 확인할 수 있습니다.
+
+![VSCode 로그인 과정4](./screenshot/vscode-login-4.png)
+
+
+## 12. 보안 및 개인정보 보호
+
+### 12-1. 기술문서/로그/스크린샷 민감정보 마스킹
 
