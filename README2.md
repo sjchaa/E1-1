@@ -1076,7 +1076,16 @@ hello
   
 ## 11. Git 설정 및 GitHub 연동
 
-### 11-1. Git 사용자 정보/기본 브랜치 설정
+### 11-1. Git과 Github의 차이
+
+- **git** : 내 컴퓨터에서 파일의 수정 내역을 버전별로 저장하고 관리하는 프로그램입니다. 작업 기록을 남기고, 필요할 때 이전 상태로 되돌리거나 여러 작업 흐름(`main` 등)을 나눌 수 있습니다.
+내 컴퓨터 안에서 작업 기록을 차곡 차곡 저장하는 개념입니다. 인터넷이 끊겨도 내 컴퓨터 안에서 기록하고 이전 상태로 돌릴 수 있습니다.
+
+- **github** : Git으로 관리하는 프로젝트와 변경 이력을 인터넷(원격 저장소)에 올려 백업하고, 다른 사람과 코드를 공유하며 함께 작업할 수 있게 해주는 웹 서비스입니다.
+즉, 저장 기록을 인터넷에 올려두고 여럿이 함께 보거나 다른 사람도 수정이 가능해서 협업이 가능합니다.
+
+
+### 11-2. Git 사용자 정보/기본 브랜치 설정
 
 ```
 sj_ee_6255@GNIA-C202-G06:~$ git config --global user.name "sjchaa"
@@ -1085,7 +1094,7 @@ sj_ee_6255@GNIA-C202-G06:~$ git config --global init.defaultBranch main
 sj_ee_6255@GNIA-C202-G06:~$ git config --list
 ```
 
-### 11-2. git config --list 결과를 기록한다
+### 11-3. git config --list 결과를 기록한다
 
 ```
 sj_ee_6255@GNIA-C202-G06:~$ git config --list
@@ -1094,7 +1103,7 @@ user.email=sj_ee_@naver.com
 init.defaultbranch=main
 ```
 
-### 11-3. github 로그인 및 저장소 연동 완료와 연동 증거
+### 11-4. github 로그인 및 저장소 연동 완료와 연동 증거
 
 
 cd ~/E1-1/myapp: 작업 디렉토리로 이동해서
