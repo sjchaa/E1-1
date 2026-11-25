@@ -3,23 +3,37 @@
 ## 1. 프로젝트 개요
 - **목표:** 공용 PC 환경에서도 재현 가능하고 독립된 개발 워크스테이션(리눅스 CLI 터미널, Docker 컨테이너, Git/GitHub 버전 관리)을 구축하고, Docker 컨테이너 실행 및 볼륨·포트 검증 과정을 문서화하여 GitHub에 제출.
 
+공용 컴퓨터를 쓰면서 자리를 옮기더라도 작업 공간을 금방 세팅하고 그 과정을 문서로 남기는 미션입니다.
+
+
 - **주요 활용 도구:** Linux CLI (Ubuntu/WSL2), Docker, Git & GitHub, VS Code.
 
 ## 2. 실행 환경
-- **OS:** Ubuntu 26.04.1 LTS (WSL2 on Windows)
-- **Shell:** Zsh (`/bin/zsh`)
-- **Docker Version:** Docker version 29.9.3, build 5457199
-- **Git Version:** git version 2.53.0
+- **OS:** Ubuntu 26.04.1 LTS (WSL2 on Windows) (`cat /etc/os-release`)
+- **Shell:** bash (`/bin/bash`) # 명령어 창 쉘 (`echo &SHELL`)
+- **Docker Version:** Docker version 29.9.3, build 545719 (`docker --version`)
+- **Git Version:** git version 2.53.0 (`git --version`)
 
 ## 3. 수행 항목 체크리스트
-✅ 터미널 기본 조작 및 폴더 구성 (`~/projects/myapp`)  
+✅ 터미널 기본 조작 및 폴더 구성 (`~/E1-1/myapp`)  
 ✅ 권한 변경 실습 (`chmod`, 소유권 및 접근 권한 `rwx` 확인)  
 ✅ Docker 설치 및 데몬 점검 (`docker info`)  
 ✅ `hello-world` 컨테이너 실행 성공  
 ✅ Dockerfile 작성 및 커스텀 웹 서버 이미지 빌드/실행  
 ✅ 포트 매핑 및 브라우저/curl 접속 검증  
 ✅ Docker 볼륨 영속성 및 바인드 마운트 검증  
-✅ Git 설정 및 GitHub/VS Code 연동 완료  
+✅ Git 설정 및 GitHub/VS Code 연동 완료
+
+## 3-1. 검증 방법 및 결과 위치
+
+| 항목 | 검증 명령 | 확인한 것 | 결과 위치 |
+|---|---|---|---|
+| 터미널 조작 | pwd, ls -la, mkdir, cp, mv, rm | 생성/복사/이동/삭제 후 목록 변화 | [4장](#4-검증-방법-및-터미널-조작-로그) |
+| 권한 | ls -l, chmod 755 / 700 | 변경 전/후 rwx 비교 | [5장](#5-권한-실습-및-증거-기록) |
+| Docker 점검 | docker --version, docker info | 버전 출력, Server 정보 출력(데몬 동작) | [6장](#6-docker-설치-및-기본-점검) |
+| ... | ... | ... | ... |
+| 포트 매핑 | docker run -p 8080:80, curl | 브라우저 localhost:8080 응답 | [9-2](#...) + screenshot/... |
+| 볼륨 | docker volume create, rm -f 후 재연결 | 삭제 후에도 hello.txt 유지 | [10-2](#...) |
 
 ## 4. 검증 방법 및 터미널 조작 로그
 
@@ -28,8 +42,10 @@
 ```text
 E1-1/
 ├─ myapp/
-│   └─ bind-test/
-├─ screenshots/
+│    ├─ bind-test/
+│    ├─ Dockerfile
+│    └─ index.html
+├─ screenshot/
 └─ README.md
 text
 ```
@@ -40,7 +56,7 @@ text
 
 - `E1-1/myapp/bind-test` : 바인드마운트 대상 폴더(호스트 파일 수정 전/후 변경사항 반영을 위해 만듦)
 
-- `E1-1/screenshots` : 포트매핑 접속 화면, 커스텀이미지, github 연동 스크린샷 보관 폴더
+- `E1-1/screenshot/\` : 포트매핑 접속 화면, 커스텀이미지, github 연동 스크린샷 보관 폴더
 
 - `E1-1/README.md` : 최종 기술문서 
 
@@ -49,6 +65,8 @@ text
 ### (2) 현재 위치 확인
 
 **절대경로**: 최상위 기준점(`/`)부터 시작하는 **전체 주소**로, 지금 내 위치가 어디든 항상 같은 곳을 가리킵니다. 아래 출력 결과인 `/home/sj_ee_6255/projects/myapp`이 절대경로입니다.
+
+(이후 작업에는 E1-1/myapp 으로 작업해서 폴더 구조가 다르게 보일 수 있습니다.)
 
 
 ```
@@ -69,7 +87,7 @@ sj_ee_6255@GNIA-C202-G06:~/E1-1$
 ### (3) 목록 확인(숨김 파일 포함) (ls -la)
 
 ```
-sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ la -la
+sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ ls -la
 total 24
 drwxr-xr-x 3 sj_ee_6255 sj_ee_6255 4096 Nov  9 23:58 .
 drwxr-xr-x 4 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:53 ..
@@ -116,7 +134,7 @@ test 123456789
 ### (7) 파일 복사 (cp)
 
 파일을 다른 이름으로 복사합니다. 
-test.txt 파일을 test1.txt로 복사합니다.
+test.txt 파일을 test_1.txt로 복사합니다.
 
 
 ```
@@ -157,7 +175,7 @@ drwxr-xr-x 2 sj_ee_6255 sj_ee_6255 4096 Nov 10 23:19 test_dir
 ### (9) 디렉토리 및 파일 삭제 (rm -rf, rm)
 
 디렉토리와 내부 파일까지 모두 삭제합니다.  
-(디렉토리 삭제는 rm -rf 명령어를 사용하여 영구 삭제 했습니다.)
+(디렉토리 삭제는 rm -rf 명령어를 사용하여 확인 없이 영구 삭제 했습니다.)
 
 ```
 sj_ee_6255@GNIA-C202-B06:~/projects/myapp$ rm -rf test_dir
@@ -196,7 +214,7 @@ drwxr-xr-x 5 sj_ee_6255 sj_ee_6255 4096 Nov  9 22:19 .venv
 
 **w (write)** - 쓰기(2) : 파일 내용을 수정하거나, 디렉터리 내에서 파일을 생성하고 삭제할 수 있는 권한입니다.
 
-**x (excute)** - 실행(1) : 파일(스크립트·프로그램)을 실행하거나, 디렉터리로 진입(`cd`)할 수 있는 권한입니다.
+**x (execute)** - 실행(1) : 파일(스크립트·프로그램)을 실행하거나, 디렉터리로 진입(`cd`)할 수 있는 권한입니다.
 
 
 ### (2) 권한 확인 (ls -l)
@@ -221,7 +239,6 @@ total 12
 -rw-r--r-- 1 sj_ee_6255 sj_ee_6255    0 Nov 17 23:49 abcdefg.txt
 -rw-r--r-- 1 sj_ee_6255 sj_ee_6255   76 Nov 17 21:55 index.html
 ```
-
 
 
 chmod 755 명령어로 
@@ -256,8 +273,6 @@ total 12
 # 변경후
 -rwxr-xr-x 1 sj_ee_6255 sj_ee_6255    0 Nov 17 23:49 abcdefg.txt
 ```
-
-
 
 #### -  디렉토리 권한 확인 및 변경
 
@@ -417,7 +432,7 @@ nginx:alpine   7cac34a4d72b         63MB             0B
 그래서 즉시 실행이 필요한 경우 앞에 관리자 권한을 부여하는 `sudo` 명령어를 붙여줬습니다.
 
 
-## 7-2. 컨테이너 : 실행/중지/목록 확인 (예: docker ps, dockr ps -a)
+### 7-2. 컨테이너 : 실행/중지/목록 확인 (예: docker ps, docker ps -a)
 
 - **컨테이너 실행** hello-world
 
@@ -523,7 +538,6 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
 - **로그 확인 (docker logs)**
 
 컨테이너의 로그를 확인하기 위해 중지된 컨테이너를 다시 실행합니다.
-
 
 기존 컨테이너를 다시 실행하는 명령어는 docker start 입니다.
 (docker run 명령어를 사용하면 새로운 컨테이너가 처음부터 생성되며 실행되기 때문에 docker start 명령어를 사용합니다.)
@@ -803,7 +817,7 @@ Digest: sha256:d66b366dac61b575bee2aef07e9c26e8070096fbe84a3d4d3eb0da069b5d76db
 Status: Downloaded newer image for ubuntu:latest
 
 # 터미널에 진입 후 간단한 명령어를 실행합니다.
-ls 명령어를 통해 내부 파일의 목록을 확인합니다.
+# ls 명령어를 통해 내부 파일의 목록을 확인합니다.
 
 root@509c6b51bafb:/# ls
 bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
@@ -881,7 +895,7 @@ sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1$ docker exec -it test-con bash
 Error response from daemon: container fff1c9491acde2b1dae4186713c908d840b3c39cddf8a5bbb413ee84dd465b78 is not running
 ```
 
-2. **백그라운드 컨테이너 실행 및 `docker attach` 후 `exit` 종료 확인**
+2. `docker start` 후 'docker exec 진입 및 `exit` 후 유지 확인**
 
   - 컨테이너 재시작(`docker start`) 및 `docker exec` 후 `exit` 시 컨테이너가 유지되는 것을 확인할 수 있습니다.
 
@@ -916,7 +930,7 @@ CONTAINER ID   IMAGE           COMMAND   CREATED         STATUS              POR
 fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute             test-con
 ```
 
-4. **관찰 요약** 
+3. **관찰 요약** 
 
 - **docker exec**: 실행 중인 컨테이너에 별도의 새 프로세스(셸, 명령)를 추가 실행한다. 해당 셸에서 exit로 종료해도 컨테이너 본체는 Up 상태를 유지한다.
 
@@ -928,6 +942,9 @@ fff1c9491acd   ubuntu:latest   "bash"    6 minutes ago   Up About a minute      
 
 
 ## 9. 기존 Dockerfile 기반 커스텀 이미지 제작
+
+
+기본 `nginx:alpine` 위에 직접 만든 `index.html'을 덮어쓰는 `Dockerfile`을 작성하고, `docker build`로 나만의 이미지를 생성합니다.
 
 
 - **선택한 기존 베이스:** `nginx:alpine` 공식 이미지 (경량 Alpine Linux 기반 웹 서버 이미지)
@@ -954,6 +971,7 @@ sj_ee_6255@DESKTOP-EVCOANJ:~/E1-1/myapp$ cat << 'EOF' > index.html
   <p>Custom static content on nginx:alpine.</p>
 </body>
 </html>
+EOF
 ```
 
 - `Dockerfile` 생성 명령
@@ -1015,10 +1033,10 @@ CONTAINER ID   IMAGE               COMMAND                  CREATED          STA
 ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   55 seconds ago   Up 54 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   my-web
 ```
 
-## 9. 포트매핑 접속 증거
+## 10. 포트매핑 접속 증거
 
 
-### 9-1. 포트 매핑이 필요한 이유
+### 10-1. 포트 매핑이 필요한 이유
 
 - 컨테이너는 네트워크 **네임스페이스(Network Namespace)**라는 기능 때문에 내 컴퓨터(호스트)와 따로 떨어진 **독립된 네트워크 공간(IP·포트 체계)**을 씁니다. 
 
@@ -1034,7 +1052,7 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   55 seconds ago   U
 ---
 
 
-### 9-2. 브라우저 접속 화면과 curl 응답 결과
+### 10-2. 브라우저 접속 화면과 curl 응답 결과
 
 `8080` 포트를 컨테이너 내부 NGINX 기본 포트 `80`번에 연결하여 외부(`localhost:8080`)에서 접근 가능하도록 합니다.
 
@@ -1059,9 +1077,9 @@ ab278b7f1f16   my-custom-img:1.0   "/docker-entrypoint.…"   27 minutes ago   U
 ![커스텀 NGINX 화면](./screenshot/dockerfile-custom%20img-nginx-localhost-8080.png)
 
 
-## 10. 바인드 마운트 반영 + 볼륨 영속성 증거
+## 11. 바인드 마운트 반영 + 볼륨 영속성 증거
 
-### 10-1. 바인트 마운트에 대한 설명
+### 11-1. 바인드 마운트에 대한 설명
 
 - 내 컴퓨터(호스트)의 특정 폴더를 컨테이너 내부 경로에 직접 연결(`-v <호스트경로>:<컨테이너경로>`)하는 방식입니다. 호스트 폴더의 파일을 수정하면 컨테이너 이미지를 다시 빌드하지 않아도 변경 내용이 바로 반영됩니다.
 
